@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Plane, Utensils, MapPin, Car, Hotel, Ship, Ticket, Train } from 'lucide-vue-next';
+import GoogleMapsIcon from './icons/GoogleMapsIcon.vue';
+import AmapIcon from './icons/AmapIcon.vue';
 
 const props = defineProps({
   event: {
@@ -42,17 +44,31 @@ const formattedTime = computed(() => {
   return `${props.event.time} - ${props.event.endTime}`;
 });
 
-const gmapUrl = computed(() => {
-  if (!props.event.gmapQuery) {
-    return null;
-  }
-  if (props.event.gmapQuery.startsWith('http')) {
-    return props.event.gmapQuery;
-  }
-  const isShanghai = ['12/07', '12/08', '12/09', '12/10', '12/11'].includes(props.date);
-  const query = encodeURIComponent(props.event.gmapQuery);
-  return isShanghai ? `https://www.amap.com/search?query=${query}` : `https://www.google.com/maps/search/?api=1&query=${query}`;
+const googleMapUrl = computed(() => {
+  const query = props.event.gmapQuery;
+  if (!query) return null;
+  if (query.startsWith('http')) return query;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 });
+
+const amapUrl = computed(() => {
+  const query = props.event.amapQuery;
+  if (!query) return null;
+  if (query.startsWith('http')) return query;
+  return `https://www.amap.com/search?query=${encodeURIComponent(query)}`;
+});
+
+const getSubEventGoogleMapUrl = (sub) => {
+  if (!sub.gmapQuery) return null;
+  if (sub.gmapQuery.startsWith('http')) return sub.gmapQuery;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sub.gmapQuery)}`;
+};
+
+const getSubEventAmapUrl = (sub) => {
+  if (!sub.amapQuery) return null;
+  if (sub.amapQuery.startsWith('http')) return sub.amapQuery;
+  return `https://www.amap.com/search?query=${encodeURIComponent(sub.amapQuery)}`;
+};
 
 const handleClick = () => {
   if (props.event.recommendations) {
@@ -136,21 +152,27 @@ const handleSubEventClick = (subEvent) => {
                   <p v-if="sub.descKey" class="text-xs text-slate-500">{{ t(sub.descKey) }}</p>
                 </div>
               </div>
-              <!-- Google Map Icon Link for Sub-event -->
-              <a 
-                v-if="sub.gmapQuery" 
-                :href="sub.gmapQuery.startsWith('http') ? sub.gmapQuery : (['12/07', '12/08', '12/09', '12/10', '12/11'].includes(date) ? `https://www.amap.com/search?query=${encodeURIComponent(sub.gmapQuery)}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sub.gmapQuery)}`)" 
-                @click.stop target="_blank" rel="noopener noreferrer" class="ml-2 p-1 rounded-full hover:bg-slate-200 transition-colors z-10"
-              >
-                <MapPin :size="16" class="text-slate-500" />
-              </a>
+              <!-- Map Links for Sub-event -->
+              <div class="flex items-center space-x-2 z-10 ml-2">
+                <a v-if="getSubEventGoogleMapUrl(sub)" :href="getSubEventGoogleMapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                  <GoogleMapsIcon class="w-4 h-4" />
+                </a>
+                <a v-if="getSubEventAmapUrl(sub)" :href="getSubEventAmapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                  <AmapIcon class="w-4 h-4" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Google Map Icon Link -->
-        <a v-if="gmapUrl && !event.recommendations && !event.appLink && !event.pdfLink" :href="gmapUrl" target="_blank" rel="noopener noreferrer" class="ml-4 p-2 rounded-full hover:bg-slate-100 transition-colors z-10" @click.stop>
-          <MapPin :size="20" class="text-slate-500" />
-        </a>
+        <!-- Map Links for Main Event -->
+        <div class="flex items-center space-x-2 z-10 ml-4" v-if="!event.recommendations && !event.appLink && !event.pdfLink">
+            <a v-if="googleMapUrl" :href="googleMapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
+              <GoogleMapsIcon class="w-5 h-5" />
+            </a>
+            <a v-if="amapUrl" :href="amapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
+              <AmapIcon class="w-5 h-5" />
+            </a>
+        </div>
       </div>
     </div>
   </div>
