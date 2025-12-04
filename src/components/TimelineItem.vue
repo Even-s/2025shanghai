@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { Plane, Utensils, MapPin, Car, Hotel, Ship, Ticket, Train } from 'lucide-vue-next';
 import GoogleMapsIcon from './icons/GoogleMapsIcon.vue';
 import AmapIcon from './icons/AmapIcon.vue';
+import BaiduMapsIcon from './icons/BaiduMapsIcon.vue';
 
 const props = defineProps({
   event: {
@@ -58,6 +59,12 @@ const amapUrl = computed(() => {
   return `https://www.amap.com/search?query=${encodeURIComponent(query)}`;
 });
 
+const baiduMapUrl = computed(() => {
+  const query = props.event.baiduQuery || props.event.titleKey;
+  if (!query) return null;
+  return `https://map.baidu.com/search/${encodeURIComponent(t(query))}`;
+});
+
 const getSubEventGoogleMapUrl = (sub) => {
   if (!sub.gmapQuery) return null;
   if (sub.gmapQuery.startsWith('http')) return sub.gmapQuery;
@@ -70,11 +77,18 @@ const getSubEventAmapUrl = (sub) => {
   return `https://www.amap.com/search?query=${encodeURIComponent(sub.amapQuery)}`;
 };
 
+const getSubEventBaiduMapUrl = (sub) => {
+  const query = sub.baiduQuery || sub.titleKey;
+  if (!query) return null;
+  return `https://map.baidu.com/search/${encodeURIComponent(t(query))}`;
+};
+
 const handleClick = () => {
   if (props.event.recommendations) {
     emit('open-recommendations', { 
       recommendations: props.event.recommendations,
-      titleKey: props.event.recommendationTitleKey
+      titleKey: props.event.recommendationTitleKey,
+      city: props.event.city
     });
   } else if (props.event.qrCodes) {
     emit('open-qr-codes', {
@@ -101,7 +115,8 @@ const handleSubEventClick = (subEvent) => {
   } else if (subEvent.recommendations) {
     emit('open-recommendations', { 
       recommendations: subEvent.recommendations,
-      titleKey: subEvent.recommendationTitleKey
+      titleKey: subEvent.recommendationTitleKey,
+      city: props.event.city
     });
   }
 };
@@ -154,11 +169,14 @@ const handleSubEventClick = (subEvent) => {
               </div>
               <!-- Map Links for Sub-event -->
               <div class="flex items-center space-x-2 z-10 ml-2">
-                <a v-if="getSubEventGoogleMapUrl(sub)" :href="getSubEventGoogleMapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                <a v-if="getSubEventGoogleMapUrl(sub) && (event.city === 'hongkong' || event.city === 'taiwan')" :href="getSubEventGoogleMapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
                   <GoogleMapsIcon class="w-4 h-4" />
                 </a>
-                <a v-if="getSubEventAmapUrl(sub)" :href="getSubEventAmapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                <a v-if="getSubEventAmapUrl(sub) && event.city === 'shanghai'" :href="getSubEventAmapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
                   <AmapIcon class="w-4 h-4" />
+                </a>
+                <a v-if="getSubEventBaiduMapUrl(sub) && event.city === 'shanghai'" :href="getSubEventBaiduMapUrl(sub)" @click.stop target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                  <BaiduMapsIcon class="w-4 h-4" />
                 </a>
               </div>
             </div>
@@ -166,11 +184,14 @@ const handleSubEventClick = (subEvent) => {
         </div>
         <!-- Map Links for Main Event -->
         <div class="flex items-center space-x-2 z-10 ml-4" v-if="!event.recommendations && !event.appLink && !event.pdfLink">
-            <a v-if="googleMapUrl" :href="googleMapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
+            <a v-if="googleMapUrl && (event.city === 'hongkong' || event.city === 'taiwan')" :href="googleMapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
               <GoogleMapsIcon class="w-5 h-5" />
             </a>
-            <a v-if="amapUrl" :href="amapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
+            <a v-if="amapUrl && event.city === 'shanghai'" :href="amapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
               <AmapIcon class="w-5 h-5" />
+            </a>
+            <a v-if="baiduMapUrl && event.city === 'shanghai'" :href="baiduMapUrl" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-slate-100 transition-colors" @click.stop>
+              <BaiduMapsIcon class="w-5 h-5" />
             </a>
         </div>
       </div>

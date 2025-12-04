@@ -1,6 +1,9 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { X, MapPin } from 'lucide-vue-next';
+import { X } from 'lucide-vue-next';
+import GoogleMapsIcon from './icons/GoogleMapsIcon.vue';
+import AmapIcon from './icons/AmapIcon.vue';
+import BaiduMapsIcon from './icons/BaiduMapsIcon.vue';
 
 const props = defineProps({
   restaurants: {
@@ -11,7 +14,7 @@ const props = defineProps({
     type: String,
     default: '推薦列表'
   },
-  date: {
+  city: {
     type: String,
     required: true,
   },
@@ -21,15 +24,24 @@ const emit = defineEmits(['close']);
 
 const { t } = useI18n();
 
-const getGmapUrl = (query) => {
+const getGmapUrl = (resto) => {
+  const query = resto.gmapQuery;
   if (!query) return null;
-  if (query.startsWith('http')) {
-    return query;
-  }
-  
-  const isShanghai = ['12/07', '12/08', '12/09', '12/10', '12/11'].includes(props.date);
-  const encodedQuery = encodeURIComponent(query);
-  return isShanghai ? `https://www.amap.com/search?query=${encodedQuery}` : `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+  if (query.startsWith('http')) return query;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
+const getAmapUrl = (resto) => {
+  const query = resto.amapQuery;
+  if (!query) return null;
+  if (query.startsWith('http')) return query;
+  return `https://www.amap.com/search?query=${encodeURIComponent(query)}`;
+};
+
+const getBaiduUrl = (resto) => {
+  const query = resto.baiduQuery || resto.nameKey;
+  if (!query) return null;
+  return `https://map.baidu.com/search/${encodeURIComponent(t(query))}`;
 };
 </script>
 
@@ -44,20 +56,30 @@ const getGmapUrl = (query) => {
       </header>
       
       <div class="overflow-y-auto p-4">
-        <ul class="space-y-3">
-          <li v-for="(resto, index) in restaurants" :key="index">
-            <a :href="getGmapUrl(resto.gmapQuery)" target="_blank" rel="noopener noreferrer" class="block p-3 rounded-lg hover:bg-slate-50 transition-colors">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h3 class="font-semibold text-slate-800">{{ t(resto.nameKey) }}</h3>
-                  <div v-if="resto.locationKey" class="mt-1.5">
-                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full">{{ t(resto.locationKey) }}</span>
-                  </div>
-                  <p class="text-sm text-slate-500 mt-1">{{ t(resto.descKey) }}</p>
+        <ul class="space-y-1">
+          <li v-for="(resto, index) in restaurants" :key="index" class="p-3 rounded-lg hover:bg-slate-50 transition-colors">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 class="font-semibold text-slate-800">{{ t(resto.nameKey) }}</h3>
+                <div v-if="resto.locationKey" class="mt-1.5">
+                  <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full">{{ t(resto.locationKey) }}</span>
                 </div>
-                <MapPin v-if="resto.gmapQuery" :size="18" class="text-slate-400 ml-4 mt-1 flex-shrink-0" />
+                <p class="text-sm text-slate-500 mt-1">{{ t(resto.descKey) }}</p>
               </div>
-            </a>
+              <div class="flex items-center space-x-2 z-10 ml-2 mt-1">
+                <a v-if="city === 'hongkong' || city === 'taiwan'" :href="getGmapUrl(resto)" target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                  <GoogleMapsIcon class="w-4 h-4" />
+                </a>
+                <template v-if="city === 'shanghai'">
+                  <a :href="getAmapUrl(resto)" target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                    <AmapIcon class="w-4 h-4" />
+                  </a>
+                  <a :href="getBaiduUrl(resto)" target="_blank" rel="noopener noreferrer" class="p-1 rounded-full hover:bg-slate-200 transition-colors">
+                    <BaiduMapsIcon class="w-4 h-4" />
+                  </a>
+                </template>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
