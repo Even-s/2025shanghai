@@ -75,7 +75,7 @@ const getGmapUrl = (query) => {
               :key="index" 
               class="w-full flex-shrink-0 text-center"
             >
-              <h3 class="font-semibold text-slate-800 mb-2">{{ qr.nameKey ? t(qr.nameKey) : `換票碼` }}</h3>
+              <h3 class="font-semibold text-slate-800 mb-2">{{ qr.nameKey ? t(qr.nameKey) : '' }}</h3>
               <img :src="qr.path" :alt="'QR Code for Passenger ' + (index + 1)" class="w-64 h-64 mx-auto border rounded-lg p-2 bg-white">
             </div>
           </div>
